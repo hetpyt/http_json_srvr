@@ -25,7 +25,7 @@ class DataStore:
         return cls.__lock_file
 
     def __init__(self):
-        self.__data_fields = ['temp', 'humi', 'baro']
+        self.__data_fields = ['temp', 'humi', 'qfe', 'dewp']
         self.__file_name = '.data_store'
 
     def save(self, data):

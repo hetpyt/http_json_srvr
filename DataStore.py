@@ -25,7 +25,7 @@ class DataStore:
 
     def __init__(self):
         self.__data_fields = ['temp', 'humi', 'qfe', 'dewp']
-        self.__file_name = Config.db_path
+        self.__file_name = Config.get('db_path')
 
     def save(self, data):
         if isinstance(data, dict):

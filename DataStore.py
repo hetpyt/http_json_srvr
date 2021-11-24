@@ -1,6 +1,5 @@
-import time
 from datetime import datetime as dt
-
+from config.config import Config
 
 class DataStoreError(Exception):
     pass
@@ -26,7 +25,7 @@ class DataStore:
 
     def __init__(self):
         self.__data_fields = ['temp', 'humi', 'qfe', 'dewp']
-        self.__file_name = '.data_store'
+        self.__file_name = Config.db_path
 
     def save(self, data):
         if isinstance(data, dict):

@@ -2,8 +2,8 @@
 from http.server import BaseHTTPRequestHandler
 from json import dumps as json_dumps, loads as json_loads
 from json.decoder import JSONDecodeError
-from DataStore import DataStoreError, DataStore
-
+from DataStoreDB import DataStoreError, DataStore
+from ChartView import ChartView
 
 class JSONRequestHandler(BaseHTTPRequestHandler):
     def response_write(self, text):
@@ -26,10 +26,12 @@ class JSONRequestHandler(BaseHTTPRequestHandler):
     def do_GET(self):
         ds = DataStore()
         data = ds.query()
+        view = ChartView(data)
         self.send_response(200)
-        self.send_header("Content-type", "text/plain; charset=utf-8")
+        self.send_header("Content-type", "text/html; charset=utf-8")
         self.end_headers()
-        self.response_write(data)
+        self.response_write(view.render())
+        #self.response_write(data.__str__())
 
     def do_POST(self):
         length = int(self.headers.get('content-length'))

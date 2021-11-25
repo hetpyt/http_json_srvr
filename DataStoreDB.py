@@ -8,32 +8,18 @@ class DataStoreError(Exception):
 
 
 class DataStore:
-    __lock_file = False
-
-    @classmethod
-    def lock(cls):
-        # waiting for unlock file
-        while cls.is_lock():
-            pass
-        cls.__lock_file = True
-
-    @classmethod
-    def unlock(cls):
-        cls.__lock_file = False
-
-    @classmethod
-    def is_lock(cls):
-        return cls.__lock_file
-
     def __init__(self):
         self.__data_fields = ['node_id', 'temp', 'humi', 'qfe', 'dewp']
         self.__data_fields_all = ['id', 'date', 'time'] + self.__data_fields
         self.__file_name = Config.get('db_path')
+        try:
+            self.__conn = sqlite3.connect(self.__file_name)
+        except Exception as e:
+            raise DataStoreError(e)
 
     def save(self, data):
         if isinstance(data, dict):
             try:
-                #self.__save_to_file(data)
                 self.__save_to_db(data)
             except Exception as e:
                 raise DataStoreError(e)
@@ -43,78 +29,80 @@ class DataStore:
     def query(self):
         return self.__query()
 
-    def get_temp(self):
-        return self.__query(['date', 'time', 'temp'])
+    def get_nodes_id(self):
         pass
+
+    def get_temp(self):
+        return self.__query(['temp'])
 
     def get_humi(self):
-        pass
+        return self.__query(['date', 'time', 'humi'])
 
     def get_qfe(self):
-        pass
+        return self.__query(['date', 'time', 'qfe'])
 
-    def open(self):
-        pass
-
-    def close(self):
-        pass
+    def get_dewp(self):
+        return self.__query(['date', 'time', 'dewp'])
 
     def __query(self, fields=None):
-        self.lock()
-        # do staf
-        result = {}
+        try:
+            result = {}
+            cursor = self.__conn.cursor()
+            rows = cursor.execute("""
+                SELECT node_id
+                FROM node_data
+                GROUP BY node_id""").fetchall()
+            for row in rows:
+                node_id = row[0]
+                result[str(node_id)] = self.__query_node(fields, node_id)
+            return result
+        except Exception as e:
+            raise DataStoreError(e)
+
+    def __query_node(self, fields, node_id):
         if fields is None:
             fields = self.__data_fields_all
         try:
-            with sqlite3.connect(Config.get('db_path')) as conn:
-                cursor = conn.cursor()
-                data = cursor.execute("""
-                    SELECT """ + ', '.join(fields) + """
-                    FROM node_data""").fetchall()
-                field_index = 0
-                for field in fields:
-                    field_data = []
-                    for row in data:
-                        field_data.append(row[field_index])
-                    result[field] = field_data
-                    field_index += 1
-                return result
-        finally:
-            self.unlock()
+            cursor = self.__conn.cursor()
+            data = cursor.execute("""
+                SELECT date || ' ' || time, """ + ', '.join(fields) + """
+                FROM node_data
+                WHERE node_id = ?""", (node_id, )).fetchall()
+            return QueryResult(fields, data)
+        except Exception as e:
+            raise DataStoreError(e)
 
     def __save_to_db(self, data):
         insdata = []
         for field in self.__data_fields:
             insdata.append(data.get(field))
-        conn = sqlite3.connect(Config.get('db_path'))
-        cursor = conn.cursor()
-        # create table
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS node_data (
-                id INTEGER PRIMARY KEY AUTOINCREMENT, 
-                date TEXT DEFAULT CURRENT_DATE,
-                time TEXT DEFAULT CURRENT_TIME, 
-                node_id NUM,
-                temp FLOAT(15, 2), 
-                humi FLOAT(15, 2), 
-                qfe FLOAT(15, 2), 
-                dewp FLOAT(15, 2)
-            )
-        """)
-        conn.commit()
+            # TODO add node_id field to esp firmware
         # insert data
-        cursor.execute("""
+        self.__conn.cursor().execute("""
             INSERT INTO node_data(node_id, temp, humi, qfe, dewp)
             VALUES(?, ?, ?, ?, ?)
             """, insdata)
-        conn.commit()
+        self.__conn.commit()
 
-    def __save_to_file(self, data):
-        self.lock()
-        try:
-            with open(self.__file_name, 'a') as f:
-                f.write('[%s]\n' % dt.now())
-                for field in self.__data_fields:
-                    f.write('%s=%s\n' % (field, data.get(field, 'null')))
-        finally:
-            self.unlock()
+
+class QueryResult:
+    def __init__(self, fields, rows):
+        self.__fields = fields
+        self.__rows = rows
+
+    def __iter__(self):
+        self.__iter = self.__rows.__iter__()
+        return self
+
+    def __next__(self):
+        row = self.__iter.next()
+        return {self.__fields[i]: row[i] for i in range(self.__fields.count())}
+
+    def __getattr__(self, item):
+        if item == 'fields':
+            return self.__fields
+        elif item == 'rows':
+            return self.__rows
+        else:
+            raise AttributeError
+

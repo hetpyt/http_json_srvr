@@ -6,11 +6,10 @@
   <link rel="stylesheet" href="https://code.highcharts.com/css/highcharts.css">
 </head>
 <body>
-<script type="module">
-  import Highcharts from 'https://code.highcharts.com/js/es-modules/masters/highcharts.src.js';
-
+<script src="https://code.highcharts.com/highcharts.js"></script>
+<div id="%CHART_CONTAINER_ID%"></div>
+<script>
   Highcharts.chart("%CHART_CONTAINER_ID%", %CHART_DATA%);
 </script>
-<div id="%CHART_CONTAINER_ID%"></div>
 </body>
 </html>

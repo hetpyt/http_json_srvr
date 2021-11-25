@@ -25,8 +25,8 @@ class JSONRequestHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         ds = DataStore()
-        data = ds.query()
-        view = ChartView(data)
+        #data = ds.query()
+        view = ChartView(ds, 'temp')
         self.send_response(200)
         self.send_header("Content-type", "text/html; charset=utf-8")
         self.end_headers()

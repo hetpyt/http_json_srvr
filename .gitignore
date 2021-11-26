@@ -1,3 +1,4 @@
+config/config.py
 data/db
 .idea/
 .data_store

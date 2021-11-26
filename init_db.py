@@ -1,5 +1,7 @@
 import math
+import re
 
+import sys
 from config.config import Config
 import sqlite3
 import random as r
@@ -44,6 +46,47 @@ def fill_test_data():
             """, data)
 
 
+def load_data(file):
+    """load data from text file of previous version"""
+    with open(file, 'r') as f:
+        lines = f.readlines()
+
+    node = 1
+    date = None
+    time = None
+    data = []
+    row = {}
+    for line in lines:
+        # [2021-11-25 00:08:59.205090]
+        m = re.match(r'^\[(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2}:\d{2})\.\d+\]', line)
+        if m:
+            print('%s -- %s' % (m[1], m[2]))
+            if date:
+                # add row to data
+                print(row)
+                data.append((date, time, node, row['temp'], row['humi'], row['qfe'], row['dewp']))
+            # define new date & time
+            date = m[1]
+            time = m[2]
+            # reset row
+            row = {}
+        # temp=12.34
+        m = re.match(r'^(\w+)=(\d+\.*\d+)', line)
+        if m:
+            print('%s = %s' % (m[1], m[2]))
+            row[m[1]] = float(m[2])
+    data.append((date, time, node, row['temp'], row['humi'], row['qfe'], row['dewp']))
+
+    with sqlite3.connect(Config.get('db_path')) as conn:
+        cursor = conn.cursor()
+        cursor.executemany("""
+            INSERT INTO node_data(date, time, node_id, temp, humi, qfe, dewp)
+            VALUES(?, ?, ?, ?, ?, ?, ?)
+            """, data)
+
+
 if __name__ == '__main__':
     init_db()
-    fill_test_data()
+    if len(sys.argv) > 1:
+        file_to_load = sys.argv[1]
+        load_data(file_to_load)

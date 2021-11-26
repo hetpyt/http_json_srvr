@@ -1,4 +1,3 @@
-
 from http.server import HTTPServer
 from JSONRequestHandler import JSONRequestHandler
 from config.config import Config

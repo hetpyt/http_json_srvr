@@ -54,6 +54,7 @@ class DataStore:
                 GROUP BY node_id""").fetchall()
             for row in rows:
                 node_id = row[0]
+                print(node_id)
                 result[str(node_id)] = self.__query_node(fields, node_id)
             return result
         except Exception as e:
@@ -73,11 +74,17 @@ class DataStore:
             raise DataStoreError(e)
 
     def __save_to_db(self, data):
+        print(data)
         insdata = []
         for field in self.__data_fields:
-            insdata.append(data.get(field))
             # TODO add node_id field to esp firmware
+            if field == 'node_id':
+                defval = 0
+            else:
+                defval = None
+            insdata.append(data.get(field, defval))
         # insert data
+        print(insdata)
         self.__conn.cursor().execute("""
             INSERT INTO node_data(node_id, temp, humi, qfe, dewp)
             VALUES(?, ?, ?, ?, ?)

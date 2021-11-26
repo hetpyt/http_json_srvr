@@ -5,17 +5,18 @@ from json.decoder import JSONDecodeError
 from DataStoreDB import DataStoreError, DataStore
 from ChartView import ChartView
 
+
 class JSONRequestHandler(BaseHTTPRequestHandler):
     def response_write(self, text):
         self.wfile.write(bytes(text, encoding='utf-8'))
 
-    def response_headers(self):
-        self.send_header("Content-type", "application/json; charset=utf-8")
+    def response_headers(self, content_type='text/plain', charset='utf-8'):
+        self.send_header("Content-type", "%s; charset=%s" % (content_type, charset))
         self.end_headers()
 
     def json_response(self, data):
         self.send_response(200)
-        self.response_headers()
+        self.response_headers('application/json')
         self.response_write(json_dumps(data))
 
     def json_error(self, code, message=""):
@@ -25,13 +26,11 @@ class JSONRequestHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         ds = DataStore()
-        #data = ds.query()
-        view = ChartView(ds, 'temp')
+        print('path=%s' % self.path)
+        view = ChartView(ds, self.path)
         self.send_response(200)
-        self.send_header("Content-type", "text/html; charset=utf-8")
-        self.end_headers()
+        self.response_headers('text/html')
         self.response_write(view.render())
-        #self.response_write(data.__str__())
 
     def do_POST(self):
         length = int(self.headers.get('content-length'))

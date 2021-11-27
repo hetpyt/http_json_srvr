@@ -1,11 +1,8 @@
-import math
 import re
-
 import sys
 from config.config import Config
 import sqlite3
-import random as r
-from random import random, randint, uniform
+from random import randint, uniform
 
 
 def init_db():

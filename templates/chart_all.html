@@ -7,9 +7,13 @@
   <script src="https://code.highcharts.com/highcharts.js"></script>
 </head>
 <body>
-<div id="%CHART_CONTAINER_ID%"></div>
+<div id="container-temp"></div>
+<div id="container-humi"></div>
+<div id="container-qfe"></div>
 <script>
-  Highcharts.chart("%CHART_CONTAINER_ID%", %CHART_DATA%);
+  Highcharts.chart("container-temp", %CHART_DATA_TEMP%);
+  Highcharts.chart("container-humi", %CHART_DATA_HUMI%);
+  Highcharts.chart("container-qfe", %CHART_DATA_QFE%);
 </script>
 </body>
 </html>

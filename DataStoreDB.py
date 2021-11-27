@@ -26,14 +26,14 @@ class DataStore:
         else:
             raise DataStoreError('type error: not a dict')
 
-    def query(self):
-        return self.__query()
+    def query(self, fields=None):
+        return self.__query(fields)
 
     def get_nodes_id(self):
         pass
 
     def get_temp(self):
-        return self.__query(['temp'])
+        return self.__query(['date', 'time', 'temp'])
 
     def get_humi(self):
         return self.__query(['date', 'time', 'humi'])
@@ -51,10 +51,10 @@ class DataStore:
             rows = cursor.execute("""
                 SELECT node_id
                 FROM node_data
-                GROUP BY node_id""").fetchall()
+                GROUP BY node_id
+            """).fetchall()
             for row in rows:
                 node_id = row[0]
-                print(node_id)
                 result[str(node_id)] = self.__query_node(fields, node_id)
             return result
         except Exception as e:
@@ -66,7 +66,7 @@ class DataStore:
         try:
             cursor = self.__conn.cursor()
             data = cursor.execute("""
-                SELECT date || ' ' || time, """ + ', '.join(fields) + """
+                SELECT """ + ', '.join(fields) + """
                 FROM node_data
                 WHERE node_id = ?""", (node_id, )).fetchall()
             return QueryResult(fields, data)

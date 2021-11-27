@@ -25,12 +25,22 @@ class JSONRequestHandler(BaseHTTPRequestHandler):
         self.response_write(json_dumps("FAIL"))
 
     def do_GET(self):
-        ds = DataStore()
-        print('path=%s' % self.path)
-        view = ChartView(ds, self.path)
-        self.send_response(200)
-        self.response_headers('text/html')
-        self.response_write(view.render())
+        path_list = self.path.strip('/').split('/')
+        if len(path_list) > 0:
+            if path_list[0] == 'chart':
+                ds = DataStore()
+                print('path=%s' % self.path)
+                try:
+                    view = ChartView(ds, path_list[1] if len(path_list) > 1 else '')
+                except Exception as e:
+                    self.json_error(404)
+                self.send_response(200)
+                self.response_headers('text/html')
+                self.response_write(view.render())
+            else:
+                self.json_error(404)
+        else:
+            self.json_error(404)
 
     def do_POST(self):
         length = int(self.headers.get('content-length'))

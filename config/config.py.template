@@ -1,0 +1,8 @@
+Config={
+    # host to bind
+    'host': 'localhost',
+    # port to bind
+    'port': 80,
+    # path of db file
+    'db_path': 'data/db'
+}
